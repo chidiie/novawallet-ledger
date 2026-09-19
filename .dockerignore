@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+.git/
+.gitignore
+tests/
+docs/
+README.md
+AI_USAGE.md
+**/appsettings.Development.json
+**/appsettings.Testing.json

@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: novawallet-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - novawallet-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/NovaWallet.Api/Dockerfile
+    container_name: novawallet-api
+    environment:
+      # Double underscore is the standard separator for nested configuration
+      # keys. Inside the compose network the database is reachable by service
+      # name on its internal port, regardless of the host mapping above.
+      ConnectionStrings__NovaWallet: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "${API_HOST_PORT}:8080"
+    depends_on:
+      db:
+        # Waits for the healthcheck to pass, not merely for the container to
+        # start — otherwise the API races Postgres's initialisation and the
+        # migration fails on first boot.
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  novawallet-pgdata:
