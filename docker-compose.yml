@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: novawallet-db
+    #container_name: novawallet-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: src/NovaWallet.Api/Dockerfile
-    container_name: novawallet-api
+    #container_name: novawallet-api
     environment:
       # Double underscore is the standard separator for nested configuration
       # keys. Inside the compose network the database is reachable by service
